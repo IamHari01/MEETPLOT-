@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AllowedDuration, Booking, TimeSlotInfo } from '@/lib/types/booking';
 import { ALLOWED_DURATIONS, generateTimelineSlots, validateBookingRequest } from '@/lib/booking/logic';
-import { Clock, User, Calendar, AlertCircle, CheckCircle2, Loader2, Info } from 'lucide-react';
+import { Clock, User, Calendar, AlertCircle, CheckCircle2, Loader2, Info, ChevronDown, Check } from 'lucide-react';
 
 interface BookingFormProps {
   dateISO: string;
@@ -18,6 +18,19 @@ export default function BookingForm({ dateISO, bookings, onBookingCreated }: Boo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Generate timeline slots for slot selection
   const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, bookings);
@@ -162,31 +175,51 @@ export default function BookingForm({ dateISO, bookings, onBookingCreated }: Boo
           <label htmlFor="start-time-select" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
             Start Time <span className="text-rose-500">*</span>
           </label>
-          <div className="relative">
-            <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <select
-              id="start-time-select"
-              value={selectedStartTime}
-              onChange={(e) => setSelectedStartTime(e.target.value)}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               disabled={availableSlots.length === 0}
-              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-50 appearance-none"
+              className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 bg-slate-50 border rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-slate-300'
+              }`}
             >
-              {availableSlots.length === 0 ? (
-                <option value="">No slots available for {duration} min meeting</option>
-              ) : (
-                <>
-                  <option value="" disabled hidden>Select a time...</option>
-                  {availableSlots.map((slot) => (
-                    <option key={slot.isoTime} value={slot.isoTime}>
-                      {slot.time}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
-            <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-              ▼
-            </div>
+              <div className="flex items-center gap-2">
+                <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <span className={selectedStartTime ? 'text-slate-800' : 'text-slate-500'}>
+                  {availableSlots.length === 0 
+                    ? `No slots available for ${duration} min meeting`
+                    : selectedStartTime 
+                      ? availableSlots.find(s => s.isoTime === selectedStartTime)?.time || 'Select a time...'
+                      : 'Select a time...'}
+                </span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isDropdownOpen && availableSlots.length > 0 && (
+              <div className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 py-1.5 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                {availableSlots.map((slot) => {
+                  const isSelected = slot.isoTime === selectedStartTime;
+                  return (
+                    <button
+                      key={slot.isoTime}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStartTime(slot.isoTime);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                        isSelected ? 'bg-blue-50/50 text-blue-700 font-semibold' : 'text-slate-700'
+                      }`}
+                    >
+                      <span>{slot.time}</span>
+                      {isSelected && <Check className="w-4 h-4 text-blue-600" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           {availableSlots.length > 0 && (
             <p className="mt-1.5 text-[11px] text-slate-500 flex items-center gap-1">

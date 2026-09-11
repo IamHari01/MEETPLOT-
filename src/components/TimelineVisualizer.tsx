@@ -8,11 +8,10 @@ import { Clock, ShieldAlert, CheckCircle, UserCheck } from 'lucide-react';
 interface TimelineVisualizerProps {
   dateISO: string;
   bookings: Booking[];
-  userTimezone: string;
 }
 
-export default function TimelineVisualizer({ dateISO, bookings, userTimezone }: TimelineVisualizerProps) {
-  const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, bookings, userTimezone);
+export default function TimelineVisualizer({ dateISO, bookings }: TimelineVisualizerProps) {
+  const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, bookings);
 
   const bookedCount = slots.filter((s) => s.status === 'BOOKED').length;
   const bufferCount = slots.filter((s) => s.status === 'BUFFER').length;
@@ -44,7 +43,7 @@ export default function TimelineVisualizer({ dateISO, bookings, userTimezone }: 
         <div>
           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             <Clock className="w-5 h-5 text-blue-600" />
-            <span>Schedule Visualizer</span>
+            <span>Schedule Visualizer (IST)</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">Real-time status derived from single source of truth</p>
         </div>

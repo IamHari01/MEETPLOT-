@@ -1,7 +1,7 @@
 import { AllowedDuration, Booking, CreateBookingInput, SlotStatus, TimeSlotInfo, ValidationResult } from '../types/booking';
 import { toDate, formatInTimeZone } from 'date-fns-tz';
 
-export const HOST_TIMEZONE = 'America/New_York';
+export const HOST_TIMEZONE = 'Asia/Kolkata';
 export const WORK_START_HOUR = 9;  // 9:00 AM
 export const WORK_END_HOUR = 18;   // 6:00 PM
 export const BUFFER_MINUTES = 15;
@@ -153,9 +153,9 @@ export function validateBookingRequest(
 
 /**
  * Generates 15-minute time slots from 9:00 AM to 6:00 PM (Host Time) for visual rendering
- * and formats the display labels in the userTimezone.
+ * and formats the display labels in the HOST_TIMEZONE.
  */
-export function generateTimelineSlots(dateISO: string, bookings: Booking[], userTimezone: string): TimeSlotInfo[] {
+export function generateTimelineSlots(dateISO: string, bookings: Booking[]): TimeSlotInfo[] {
   const slots: TimeSlotInfo[] = [];
   
   const dateStr = dateISO.split('T')[0];
@@ -171,8 +171,8 @@ export function generateTimelineSlots(dateISO: string, bookings: Booking[], user
     const slotStartMs = currentMs;
     const slotEndMs = slotStartMs + 15 * 60 * 1000;
 
-    // Format the time strictly into the user's selected timezone
-    const formattedLabel = formatInTimeZone(new Date(slotStartMs), userTimezone, 'h:mm a');
+    // Format the time strictly into the application timezone
+    const formattedLabel = formatInTimeZone(new Date(slotStartMs), HOST_TIMEZONE, 'h:mm a');
 
     let status: SlotStatus = 'AVAILABLE';
     let bookingName: string | undefined;
@@ -215,13 +215,12 @@ export function generateTimelineSlots(dateISO: string, bookings: Booking[], user
 }
 
 /**
- * Returns available start times formatted in the userTimezone for a requested duration
+ * Returns available start times formatted in the HOST_TIMEZONE for a requested duration
  */
 export function getAvailableStartTimes(
   dateISO: string,
   durationMinutes: AllowedDuration,
-  bookings: Booking[],
-  userTimezone: string
+  bookings: Booking[]
 ): { timeLabel: string; isoTime: string }[] {
   const availableTimes: { timeLabel: string; isoTime: string }[] = [];
   
@@ -242,7 +241,7 @@ export function getAvailableStartTimes(
 
     const val = validateBufferAndOverlap(startISO, endISO, bookings);
     if (val.isValid) {
-      const formattedLabel = formatInTimeZone(new Date(currentMs), userTimezone, 'h:mm a');
+      const formattedLabel = formatInTimeZone(new Date(currentMs), HOST_TIMEZONE, 'h:mm a');
 
       availableTimes.push({
         timeLabel: formattedLabel,

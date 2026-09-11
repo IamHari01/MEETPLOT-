@@ -8,11 +8,10 @@ import { Clock, User, Calendar, AlertCircle, CheckCircle2, Loader2, Info } from 
 interface BookingFormProps {
   dateISO: string;
   bookings: Booking[];
-  userTimezone: string;
   onBookingCreated: () => void;
 }
 
-export default function BookingForm({ dateISO, bookings, userTimezone, onBookingCreated }: BookingFormProps) {
+export default function BookingForm({ dateISO, bookings, onBookingCreated }: BookingFormProps) {
   const [name, setName] = useState('');
   const [duration, setDuration] = useState<AllowedDuration>(30);
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
@@ -21,7 +20,7 @@ export default function BookingForm({ dateISO, bookings, userTimezone, onBooking
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Generate timeline slots for slot selection
-  const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, bookings, userTimezone);
+  const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, bookings);
 
   // Filter available slots that can fit selected duration
   const availableSlots = slots.filter((slot) => {
@@ -95,7 +94,7 @@ export default function BookingForm({ dateISO, bookings, userTimezone, onBooking
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">New Booking</h2>
-          <p className="text-xs text-slate-500">9:00 AM - 6:00 PM • Mandatory 15-min Buffer</p>
+          <p className="text-xs text-slate-500">9:00 AM - 6:00 PM (IST) • Mandatory 15-min Buffer</p>
         </div>
       </div>
 

@@ -17,7 +17,7 @@ describe('Booking Business Rules & Validation Engine', () => {
   const createIso = (hours: number, minutes: number): string => {
     const { toDate } = require('date-fns-tz');
     const dateStr = `${TEST_DATE}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
-    return toDate(dateStr, { timeZone: 'America/New_York' }).toISOString();
+    return toDate(dateStr, { timeZone: 'Asia/Kolkata' }).toISOString();
   };
 
   describe('Name Validation', () => {
@@ -195,7 +195,7 @@ describe('Booking Business Rules & Validation Engine', () => {
 
   describe('Timeline & Available Start Times Generator', () => {
     it('generates 15-minute timeline slots from 9:00 AM to 6:00 PM', () => {
-      const slots = generateTimelineSlots(createIso(9, 0), [], 'America/New_York');
+      const slots = generateTimelineSlots(createIso(9, 0), []);
       // 9:00 AM to 6:00 PM is 9 hours = 36 slots of 15 mins
       expect(slots.length).toBe(36);
       expect(slots[0].time).toMatch(/9:00/);
@@ -214,7 +214,7 @@ describe('Booking Business Rules & Validation Engine', () => {
         },
       ];
 
-      const slots = generateTimelineSlots(createIso(9, 0), bookings, 'America/New_York');
+      const slots = generateTimelineSlots(createIso(9, 0), bookings);
 
       // 10:00 slot -> BOOKED
       const slot1000 = slots.find((s) => s.isoTime === createIso(10, 0));
@@ -242,7 +242,7 @@ describe('Booking Business Rules & Validation Engine', () => {
         },
       ];
 
-      const avail60 = getAvailableStartTimes(createIso(9, 0), 60, bookings, 'America/New_York');
+      const avail60 = getAvailableStartTimes(createIso(9, 0), 60, bookings);
       const isoTimes = avail60.map((a) => a.isoTime);
 
       // 9:00 AM (ends 10:00 AM) -> violates buffer (only 0 min gap) -> NOT available!

@@ -21,17 +21,6 @@ export default function Home() {
     return today.toISOString().split('T')[0];
   });
   
-  const [userTimezone, setUserTimezone] = useState<string>('America/New_York');
-
-  useEffect(() => {
-    // Set to browser timezone on mount to avoid SSR hydration mismatch
-    try {
-      setUserTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    } catch (e) {
-      // Fallback
-    }
-  }, []);
-  
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,37 +88,11 @@ export default function Home() {
   // Construct a base ISO string for the selected date at midnight UTC
   const selectedDateISO = `${selectedDate}T00:00:00.000Z`;
 
-  const commonTimezones = [
-    'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-    'Europe/London', 'Europe/Paris', 'Asia/Kolkata', 'Asia/Tokyo', 'Australia/Sydney'
-  ];
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar selectedDate={selectedDate} onDateChange={setSelectedDate} />
       
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 flex flex-col">
-        
-        {/* Timezone Selector Header */}
-        <div className="w-full flex justify-end mb-6">
-          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200/60">
-            <label htmlFor="timezone" className="text-sm font-semibold text-slate-600">Timezone:</label>
-            <select
-              id="timezone"
-              value={userTimezone}
-              onChange={(e) => setUserTimezone(e.target.value)}
-              className="text-sm border-0 bg-transparent py-1 pl-1 pr-6 text-slate-800 font-medium focus:ring-0 cursor-pointer"
-            >
-              {!commonTimezones.includes(userTimezone) && (
-                <option value={userTimezone}>{userTimezone}</option>
-              )}
-              {commonTimezones.map(tz => (
-                <option key={tz} value={tz}>{tz}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Left Column: Form & List */}
           <div className="w-full lg:w-5/12 xl:w-1/3 flex flex-col gap-8 shrink-0">
@@ -137,13 +100,11 @@ export default function Home() {
               dateISO={selectedDateISO} 
               bookings={bookings} 
               onBookingCreated={fetchBookings}
-              userTimezone={userTimezone}
             />
             
             <BookingsList 
               bookings={bookings} 
               onBookingCanceled={fetchBookings}
-              userTimezone={userTimezone}
             />
           </div>
           
@@ -165,7 +126,6 @@ export default function Home() {
               <TimelineVisualizer 
                 dateISO={selectedDateISO} 
                 bookings={bookings}
-                userTimezone={userTimezone}
               />
             )}
           </div>

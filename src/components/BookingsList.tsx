@@ -4,23 +4,23 @@ import React, { useState } from 'react';
 import { Booking } from '@/lib/types/booking';
 import { CalendarDays, Clock, User, Trash2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
+import { HOST_TIMEZONE } from '@/lib/booking/logic';
 
 interface BookingsListProps {
   bookings: Booking[];
-  userTimezone: string;
   onBookingCanceled: () => void;
 }
 
-export default function BookingsList({ bookings, userTimezone, onBookingCanceled }: BookingsListProps) {
+export default function BookingsList({ bookings, onBookingCanceled }: BookingsListProps) {
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Format timestamp safely into the selected user timezone
+  // Safely format time
   const formatTime = (isoString: string) => {
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return isoString;
-    return formatInTimeZone(d, userTimezone, 'h:mm a');
+    return formatInTimeZone(d, HOST_TIMEZONE, 'h:mm a');
   };
 
   const handleCancel = async (id: string, name: string) => {

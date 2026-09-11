@@ -1,0 +1,32 @@
+{
+  "name": "appointment-booking-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "date-fns-tz": "^3.2.0",
+    "lucide-react": "^0.439.0",
+    "next": "14.2.25",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.45",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}

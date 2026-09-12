@@ -69,3 +69,11 @@ BEGIN
   RETURN v_result;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 3. Custom App Users Table (Vercel-compatible Auth)
+CREATE TABLE IF NOT EXISTS app_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

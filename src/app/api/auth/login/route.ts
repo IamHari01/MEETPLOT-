@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { supabaseAuthClient } from '@/lib/supabase/client';
 
 export async function POST(req: Request) {
   try {
@@ -10,12 +9,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const dataPath = path.join(process.cwd(), 'data', 'users.json');
-    const fileContents = fs.readFileSync(dataPath, 'utf8');
-    const users = JSON.parse(fileContents);
+    // Fetch user from Supabase app_users table
+    const { data: user, error } = await supabaseAuthClient
+      .from('app_users')
+      .select('*')
+      .eq('email', email)
+      .single();
 
-    const user = users.find((u: any) => u.email === email);
-    if (!user) {
+    if (error || !user) {
       return NextResponse.json({ error: 'Incorrect ID or password.' }, { status: 401 });
     }
 
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: 'Login successful', user });
   } catch (error) {
+    console.error('Login error:', error);
     return NextResponse.json({ error: 'Failed to authenticate user' }, { status: 500 });
   }
 }

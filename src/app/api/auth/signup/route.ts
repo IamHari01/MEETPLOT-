@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { supabaseAuthClient } from '@/lib/supabase/client';
 
 export async function POST(req: Request) {
   try {
@@ -10,22 +9,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const dataPath = path.join(process.cwd(), 'data', 'users.json');
-    const fileContents = fs.readFileSync(dataPath, 'utf8');
-    const users = JSON.parse(fileContents);
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAuthClient
+      .from('app_users')
+      .select('email')
+      .eq('email', email)
+      .single();
 
-    const existingUser = users.find((u: any) => u.email === email);
     if (existingUser) {
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });
     }
 
-    const newUser = { email, password };
-    users.push(newUser);
+    // Insert new user
+    const { data: newUser, error } = await supabaseAuthClient
+      .from('app_users')
+      .insert([{ email, password }])
+      .select()
+      .single();
 
-    fs.writeFileSync(dataPath, JSON.stringify(users, null, 2));
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw error;
+    }
 
     return NextResponse.json({ message: 'User created successfully', user: newUser });
   } catch (error) {
+    console.error('Signup error:', error);
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
   }
 }

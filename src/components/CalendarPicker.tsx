@@ -24,8 +24,11 @@ interface CalendarPickerProps {
 }
 
 export default function CalendarPicker({ selectedDate, onDateChange }: CalendarPickerProps) {
-  // Parse the selected date as a UTC midnight date to avoid browser timezone shifts
-  const [currentMonth, setCurrentMonth] = useState(new Date(`${selectedDate}T00:00:00Z`));
+  // Parse the selected date safely in local time to avoid browser timezone shifts
+  const [sYear, sMonth, sDay] = selectedDate.split('-');
+  const selectedDateObj = new Date(parseInt(sYear), parseInt(sMonth) - 1, parseInt(sDay));
+
+  const [currentMonth, setCurrentMonth] = useState(selectedDateObj);
 
   // Determine "today" in the Host Timezone (Asia/Kolkata) to disable past dates
   const now = new Date();
@@ -35,7 +38,9 @@ export default function CalendarPicker({ selectedDate, onDateChange }: CalendarP
     month: '2-digit',
     day: '2-digit'
   }).format(now);
-  const today = new Date(`${todayString}T00:00:00Z`);
+  
+  const [tYear, tMonth, tDay] = todayString.split('-');
+  const today = new Date(parseInt(tYear), parseInt(tMonth) - 1, parseInt(tDay));
 
   const nextMonth = () => {
     setCurrentMonth(addMonths(currentMonth, 1));
@@ -46,8 +51,8 @@ export default function CalendarPicker({ selectedDate, onDateChange }: CalendarP
   };
 
   const onDateClick = (day: Date) => {
-    // Return formatted as YYYY-MM-DD
-    onDateChange(day.toISOString().split('T')[0]);
+    // Return formatted as YYYY-MM-DD based on local date
+    onDateChange(format(day, 'yyyy-MM-dd'));
   };
 
   const renderHeader = () => {
@@ -94,7 +99,10 @@ export default function CalendarPicker({ selectedDate, onDateChange }: CalendarP
     const monthEnd = endOfMonth(monthStart);
     const startDate = startOfWeek(monthStart);
     const endDate = endOfWeek(monthEnd);
-    const selectedDateObj = new Date(`${selectedDate}T00:00:00Z`);
+    
+    // Parse the selected date safely in local time
+    const [sYear, sMonth, sDay] = selectedDate.split('-');
+    const selectedDateObj = new Date(parseInt(sYear), parseInt(sMonth) - 1, parseInt(sDay));
 
     const rows = [];
     let days = [];

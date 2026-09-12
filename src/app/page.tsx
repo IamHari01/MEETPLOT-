@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseAuthClient as supabase } from '@/lib/supabase/client';
 import { Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import Logo from '@/components/Logo';
 import Link from 'next/link';
 
 export default function LandingPage() {
@@ -23,11 +24,9 @@ export default function LandingPage() {
     <div className="min-h-screen bg-slate-950 text-white selection:bg-orange-500 selection:text-white flex flex-col">
       {/* Header */}
       <header className="absolute top-0 inset-x-0 z-50 px-6 py-6 max-w-7xl mx-auto flex justify-between items-center w-full">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
-            <Calendar className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-bold tracking-tight text-xl">MEETPLOT</span>
+        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 backdrop-blur-sm">
+          <Logo className="w-6 h-6" />
+          <span className="font-bold tracking-wider">MEETPLOT</span>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">

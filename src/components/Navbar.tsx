@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, User, ChevronDown, LogOut } from 'lucide-react';
+import { User, ChevronDown, LogOut } from 'lucide-react';
+import Logo from '@/components/Logo';
 import { supabaseAuthClient as supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -32,11 +33,8 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-30 bg-[#0a0a0a] border-b border-white/10 text-white">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-white">
-            <Calendar className="w-5 h-5 text-black" />
-          </div>
+        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-2xl border border-white/10">
+          <Logo className="w-6 h-6" />
           <h1 className="text-xl font-bold tracking-tight">
             MEETPLOT
           </h1>

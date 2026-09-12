@@ -40,6 +40,17 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
   }, []);
 
   useEffect(() => {
+    if (!editingBooking) {
+      const sessionEmail = localStorage.getItem('meetplot_session');
+      if (sessionEmail) {
+        const namePart = sessionEmail.split('@')[0];
+        const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        setName(capitalized);
+      }
+    }
+  }, [editingBooking]);
+
+  useEffect(() => {
     if (editingBooking) {
       setName(editingBooking.name);
       setDuration(editingBooking.duration as AllowedDuration);
@@ -177,10 +188,11 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
               id="name-input"
               type="text"
               required
+              readOnly
               placeholder="e.g., Alex Johnson"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-slate-800/20 focus:border-slate-800 transition-all placeholder:text-slate-400"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-medium text-sm focus:outline-none cursor-not-allowed"
             />
           </div>
         </div>

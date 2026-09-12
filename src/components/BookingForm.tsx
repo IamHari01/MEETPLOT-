@@ -4,14 +4,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AllowedDuration, Booking, TimeSlotInfo } from '@/lib/types/booking';
 import { ALLOWED_DURATIONS, generateTimelineSlots, validateBookingRequest } from '@/lib/booking/logic';
 import { Clock, User, Calendar, AlertCircle, CheckCircle2, Loader2, Info, ChevronDown, Check } from 'lucide-react';
+import CalendarPicker from './CalendarPicker';
 
 interface BookingFormProps {
   dateISO: string;
+  selectedDate: string;
+  onDateChange: (date: string) => void;
   bookings: Booking[];
   onBookingCreated: () => void;
 }
 
-export default function BookingForm({ dateISO, bookings, onBookingCreated }: BookingFormProps) {
+export default function BookingForm({ dateISO, selectedDate, onDateChange, bookings, onBookingCreated }: BookingFormProps) {
   const [name, setName] = useState('');
   const [duration, setDuration] = useState<AllowedDuration>(30);
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
@@ -106,7 +109,7 @@ export default function BookingForm({ dateISO, bookings, onBookingCreated }: Boo
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 shadow-xl shadow-slate-200/50">
+    <div className="relative z-20 bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 shadow-xl shadow-slate-200/50">
       <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
         <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
           <Calendar className="w-5 h-5" />
@@ -174,6 +177,14 @@ export default function BookingForm({ dateISO, bookings, onBookingCreated }: Boo
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Date Selector */}
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+            Date <span className="text-rose-500">*</span>
+          </label>
+          <CalendarPicker selectedDate={selectedDate} onDateChange={onDateChange} />
         </div>
 
         {/* Start Time Picker */}

@@ -103,7 +103,9 @@ export default function Home() {
           {/* Left Column: Form & List */}
           <div className="w-full lg:w-5/12 xl:w-1/3 flex flex-col gap-8 shrink-0">
             <BookingForm 
-              dateISO={selectedDateISO} 
+              dateISO={selectedDateISO}
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
               bookings={bookings} 
               onBookingCreated={fetchBookings}
             />

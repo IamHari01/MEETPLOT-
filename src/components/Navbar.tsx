@@ -38,14 +38,6 @@ export default function Navbar({ selectedDate, onDateChange }: NavbarProps) {
             <span>9:00 AM – 6:00 PM</span>
           </div>
 
-          <div className="relative">
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => onDateChange(e.target.value)}
-              className="px-3 py-1.5 bg-blue-600/20 border border-blue-500/40 rounded-xl text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer"
-            />
-          </div>
         </div>
       </div>
     </header>

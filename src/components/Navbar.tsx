@@ -1,43 +1,73 @@
 'use client';
 
-import React from 'react';
-import { Calendar, Clock, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, User, ChevronDown, LogOut } from 'lucide-react';
+import { supabaseAuthClient as supabase } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 interface NavbarProps {
   selectedDate: string;
   onDateChange: (date: string) => void;
 }
 
-export default function Navbar({ selectedDate, onDateChange }: NavbarProps) {
+export default function Navbar() {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [userName, setUserName] = useState<string>('');
+  const router = useRouter();
+
+  useEffect(() => {
+    const sessionEmail = localStorage.getItem('meetplot_session');
+    if (sessionEmail) {
+      const namePart = sessionEmail.split('@')[0];
+      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+      setUserName(capitalized);
+    }
+  }, []);
+
+  const handleSignOut = async () => {
+    localStorage.removeItem('meetplot_session');
+    router.push('/');
+  };
+
   return (
-    <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <header className="sticky top-0 z-30 bg-[#0a0a0a] border-b border-white/10 text-white">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-md shadow-blue-500/20">
-            <Calendar className="w-6 h-6 text-white" />
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-white">
+            <Calendar className="w-5 h-5 text-black" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-                SlotSync Pro
-              </h1>
-              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 border border-blue-400/30 text-blue-300 rounded-full flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-blue-400" />
-                15m Buffer Protection
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">Production Meeting Slot Scheduler (9:00 AM – 6:00 PM)</p>
-          </div>
+          <h1 className="text-xl font-bold tracking-tight">
+            MEETPLOT
+          </h1>
         </div>
 
-        {/* Date Selector & Operating Hours Badge */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-xs text-slate-300">
-            <Clock className="w-3.5 h-3.5 text-blue-400" />
-            <span>9:00 AM – 6:00 PM</span>
-          </div>
+        {/* Auth Navigation */}
+        <div className="relative">
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-3 p-1.5 rounded-full hover:bg-white/10 transition-colors pr-3"
+          >
+            <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/20 flex items-center justify-center">
+              <User className="w-4 h-4 text-slate-300" />
+            </div>
+            {userName && (
+              <span className="text-sm font-medium text-slate-200">{userName}</span>
+            )}
+            <ChevronDown className="w-4 h-4 text-slate-400" />
+          </button>
 
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden text-slate-900 z-50">
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2 px-4 py-3 hover:bg-slate-50 transition-colors text-left text-sm font-medium text-rose-600"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log out</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

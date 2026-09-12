@@ -112,7 +112,16 @@ export async function createBooking(input: CreateBookingInput): Promise<{ bookin
       });
 
       if (error) {
-        return { error: error.message };
+        console.error('[DB] Supabase RPC create_booking_atomic failed:', error);
+        
+        const msg = error.message || '';
+        if (msg.includes('Conflict:') || 
+            msg.includes('Name cannot be empty') || 
+            msg.includes('Invalid duration')) {
+          return { error: msg };
+        }
+        
+        return { error: 'Database error occurred while creating booking.' };
       }
       return { booking: data as Booking };
     } catch (e: any) {
@@ -160,7 +169,8 @@ export async function cancelBooking(id: string): Promise<{ success: boolean; err
   if (supabase) {
     const { error } = await supabase.from('bookings').delete().eq('id', id);
     if (error) {
-      return { success: false, error: error.message };
+      console.error(`[DB] Supabase failed to delete booking ${id}:`, error);
+      return { success: false, error: 'Database error occurred while canceling booking.' };
     }
     return { success: true };
   }

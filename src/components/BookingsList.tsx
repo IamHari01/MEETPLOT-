@@ -32,7 +32,14 @@ export default function BookingsList({ bookings, onBookingCanceled }: BookingsLi
       const res = await fetch(`/api/bookings/${id}`, {
         method: 'DELETE',
       });
-      const data = await res.json();
+      
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        setErrorMsg('Failed to parse server response. The server might be down.');
+        return;
+      }
 
       if (!res.ok || !data.success) {
         setErrorMsg(data.error || 'Failed to cancel booking.');

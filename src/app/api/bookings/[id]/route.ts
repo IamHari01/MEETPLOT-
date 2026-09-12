@@ -34,8 +34,9 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: any) {
+    console.error(`[API] DELETE /api/bookings/[id] error for id ${params?.id}:`, error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: 'An unexpected error occurred while canceling the booking.' },
       { status: 500 }
     );
   }

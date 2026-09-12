@@ -13,8 +13,9 @@ export async function GET() {
     const bookings = await getBookings();
     return NextResponse.json({ success: true, bookings }, { status: 200 });
   } catch (error: any) {
+    console.error('[API] GET /api/bookings error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch bookings' },
+      { success: false, error: 'An unexpected error occurred while fetching bookings.' },
       { status: 500 }
     );
   }
@@ -50,8 +51,9 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    console.error('[API] POST /api/bookings error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: 'An unexpected internal server error occurred.' },
       { status: 500 }
     );
   }

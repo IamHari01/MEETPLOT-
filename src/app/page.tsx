@@ -30,10 +30,16 @@ export default function Home() {
     setError(null);
     try {
       const res = await fetch('/api/bookings');
-      const data = await res.json();
+      
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        throw new Error('Failed to read server response. The server might be temporarily down.');
+      }
       
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch bookings');
+        throw new Error(data.error || 'Failed to fetch bookings.');
       }
       
       // We only care about bookings for the selected date in this view.

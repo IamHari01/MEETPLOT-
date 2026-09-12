@@ -83,7 +83,13 @@ export default function BookingForm({ dateISO, bookings, onBookingCreated }: Boo
         }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        setErrorMsg('Failed to parse server response. The server might be down.');
+        return;
+      }
 
       if (!res.ok || !data.success) {
         setErrorMsg(data.error || 'Failed to create booking.');

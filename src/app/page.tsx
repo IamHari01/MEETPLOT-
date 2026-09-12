@@ -1,141 +1,88 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Navbar from '@/components/Navbar';
-import BookingForm from '@/components/BookingForm';
-import TimelineVisualizer from '@/components/TimelineVisualizer';
-import BookingsList from '@/components/BookingsList';
-import { Booking } from '@/lib/types/booking';
-import { Loader2 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabaseAuthClient as supabase } from '@/lib/supabase/client';
+import { Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
-// Initialize Supabase client for realtime subscriptions (Browser-safe)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
-
-export default function Home() {
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const today = new Date();
-    // Default to today's date in YYYY-MM-DD format
-    return today.toISOString().split('T')[0];
-  });
-  
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchBookings = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/bookings');
-      
-      let data;
-      try {
-        data = await res.json();
-      } catch (parseError) {
-        throw new Error('Failed to read server response. The server might be temporarily down.');
-      }
-      
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch bookings.');
-      }
-      
-      // We only care about bookings for the selected date in this view.
-      // In a real app with huge data, this filtering would happen on the server.
-      // For this implementation, we filter the active bookings by the selected date.
-      const filtered = data.bookings.filter((b: Booking) => {
-        // Compare the local date portion of the UTC timestamp
-        const bDate = new Date(b.start_time).toISOString().split('T')[0];
-        return bDate === selectedDate;
-      });
-      
-      setBookings(filtered);
-    } catch (err: any) {
-      setError(err.message || 'Network error');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedDate]);
+export default function LandingPage() {
+  const router = useRouter();
 
   useEffect(() => {
-    fetchBookings();
-  }, [fetchBookings]);
-
-  // Set up Supabase Realtime subscription
-  useEffect(() => {
-    if (!supabase) return;
-
-    const channel = supabase
-      .channel('public:bookings')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'bookings' },
-        (payload) => {
-          console.log('Realtime update received:', payload);
-          // Refetch bookings to recalculate availability correctly
-          fetchBookings();
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to Supabase Realtime');
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('Failed to subscribe to Realtime:', status);
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
+    const checkSession = () => {
+      const session = localStorage.getItem('meetplot_session');
+      if (session) {
+        router.push('/dashboard');
+      }
     };
-  }, [fetchBookings]);
-
-  // Construct a base ISO string for the selected date at midnight UTC
-  const selectedDateISO = `${selectedDate}T00:00:00.000Z`;
+    checkSession();
+  }, [router]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <Navbar selectedDate={selectedDate} onDateChange={setSelectedDate} />
-      
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 flex flex-col">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* Left Column: Form & List */}
-          <div className="w-full lg:w-5/12 xl:w-1/3 flex flex-col gap-8 shrink-0">
-            <BookingForm 
-              dateISO={selectedDateISO}
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
-              bookings={bookings} 
-              onBookingCreated={fetchBookings}
-            />
-            
-            <BookingsList 
-              bookings={bookings} 
-              onBookingCanceled={fetchBookings}
-            />
+    <div className="min-h-screen bg-slate-950 text-white selection:bg-orange-500 selection:text-white flex flex-col">
+      {/* Header */}
+      <header className="absolute top-0 inset-x-0 z-50 px-6 py-6 max-w-7xl mx-auto flex justify-between items-center w-full">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
+            <Calendar className="w-5 h-5 text-white" />
           </div>
+          <span className="font-bold tracking-tight text-xl">MEETPLOT</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <Link href="/login" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+            Log in
+          </Link>
+          <Link 
+            href="/login" 
+            className="text-sm font-medium bg-white text-black px-5 py-2 rounded-full hover:bg-slate-200 transition-colors"
+          >
+            Sign up
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col items-center justify-center relative px-6 pt-32 pb-20 overflow-hidden">
+        
+        {/* Abstract Background Effects */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-orange-500/20 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+        <div className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center">
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">
+            MEETPLOT
+          </h1>
           
-          {/* Right Column: Timeline Visualizer */}
-          <div className="w-full lg:w-7/12 xl:w-2/3 sticky top-24">
-            {isLoading ? (
-               <div className="bg-white/50 backdrop-blur-sm border border-slate-200 rounded-2xl p-12 flex flex-col items-center justify-center text-slate-500 shadow-sm min-h-[400px]">
-                 <Loader2 className="w-8 h-8 animate-spin mb-4 text-blue-500" />
-                 <p className="text-sm font-medium">Loading schedule...</p>
-               </div>
-            ) : error ? (
-               <div className="bg-rose-50 border border-rose-200 rounded-2xl p-12 flex flex-col items-center justify-center text-rose-600 shadow-sm min-h-[400px]">
-                 <p className="text-sm font-medium">{error}</p>
-                 <button onClick={fetchBookings} className="mt-4 px-4 py-2 bg-rose-600 text-white text-sm font-semibold rounded-lg hover:bg-rose-700 transition-colors">
-                   Retry
-                 </button>
-               </div>
-            ) : (
-              <TimelineVisualizer 
-                dateISO={selectedDateISO} 
-                bookings={bookings}
-              />
-            )}
+          <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-12">
+            Schedule meetings effortlessly. Experience a premium, frictionless booking experience designed for modern professionals.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+            <Link 
+              href="/login" 
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white text-black font-semibold hover:bg-slate-200 hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+            >
+              Get Started
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Mockup Preview Area */}
+        <div className="relative z-10 mt-24 w-full max-w-5xl mx-auto">
+          <div className="aspect-[16/9] rounded-2xl md:rounded-[2rem] bg-slate-900/50 border border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden p-2 flex flex-col">
+            <div className="h-6 w-full flex items-center px-4 gap-2 border-b border-white/5 mb-4">
+              <div className="w-2.5 h-2.5 rounded-full bg-rose-500/50"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50"></div>
+            </div>
+            
+            <div className="flex-1 w-full bg-slate-950 rounded-xl md:rounded-2xl border border-white/5 flex items-center justify-center relative overflow-hidden">
+               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
+               <Calendar className="w-16 h-16 text-slate-700/50 absolute" />
+               <div className="z-10 text-slate-500 font-medium">Your Dashboard Awaits</div>
+            </div>
           </div>
         </div>
       </main>

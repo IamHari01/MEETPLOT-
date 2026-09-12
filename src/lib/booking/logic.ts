@@ -127,7 +127,8 @@ export function validateBufferAndOverlap(
  */
 export function validateBookingRequest(
   input: CreateBookingInput,
-  existingBookings: Booking[]
+  existingBookings: Booking[],
+  excludeBookingId?: string
 ): ValidationResult {
   const nameVal = validateName(input.name);
   if (!nameVal.isValid) return nameVal;
@@ -145,7 +146,7 @@ export function validateBookingRequest(
   const hoursVal = validateWorkingHours(input.start_time, endTimeISO);
   if (!hoursVal.isValid) return hoursVal;
 
-  const bufferVal = validateBufferAndOverlap(input.start_time, endTimeISO, existingBookings);
+  const bufferVal = validateBufferAndOverlap(input.start_time, endTimeISO, existingBookings, excludeBookingId);
   if (!bufferVal.isValid) return bufferVal;
 
   return { isValid: true };
@@ -220,7 +221,8 @@ export function generateTimelineSlots(dateISO: string, bookings: Booking[]): Tim
 export function getAvailableStartTimes(
   dateISO: string,
   durationMinutes: AllowedDuration,
-  bookings: Booking[]
+  bookings: Booking[],
+  excludeBookingId?: string
 ): { timeLabel: string; isoTime: string }[] {
   const availableTimes: { timeLabel: string; isoTime: string }[] = [];
   
@@ -239,7 +241,7 @@ export function getAvailableStartTimes(
     const startISO = new Date(currentMs).toISOString();
     const endISO = calculateEndTime(startISO, durationMinutes);
 
-    const val = validateBufferAndOverlap(startISO, endISO, bookings);
+    const val = validateBufferAndOverlap(startISO, endISO, bookings, excludeBookingId);
     if (val.isValid) {
       const formattedLabel = formatInTimeZone(new Date(currentMs), HOST_TIMEZONE, 'h:mm a');
 

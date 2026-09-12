@@ -191,3 +191,82 @@ export async function cancelBooking(id: string): Promise<{ success: boolean; err
     release();
   }
 }
+
+/**
+ * Updates an existing booking.
+ * Validates against overlaps excluding the current booking.
+ */
+export async function updateBooking(id: string, input: CreateBookingInput): Promise<{ booking?: Booking; error?: string }> {
+  if (supabase) {
+    // We need to validate first before updating supabase
+    const { data: existingBookings, error: fetchError } = await supabase
+      .from('bookings')
+      .select('*')
+      .order('start_time', { ascending: true });
+      
+    if (fetchError) {
+      return { error: 'Database error occurred while fetching bookings for validation.' };
+    }
+
+    const validation = validateBookingRequest(input, existingBookings as Booking[], id);
+    if (!validation.isValid) {
+      return { error: validation.error || 'Invalid booking update request.' };
+    }
+
+    const startTimeDate = new Date(input.start_time);
+    const endTimeDate = new Date(startTimeDate.getTime() + input.duration * 60 * 1000);
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .update({
+        name: input.name.trim(),
+        start_time: startTimeDate.toISOString(),
+        end_time: endTimeDate.toISOString(),
+        duration: input.duration,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`[DB] Supabase failed to update booking ${id}:`, error);
+      return { error: 'Database error occurred while updating booking.' };
+    }
+    
+    return { booking: data as Booking };
+  }
+
+  // Local storage fallback
+  const release = await localMutex.lock();
+  try {
+    const existingBookings = readLocalBookings();
+    
+    const existingBookingIndex = existingBookings.findIndex((b) => b.id === id);
+    if (existingBookingIndex === -1) {
+      return { error: 'Booking not found.' };
+    }
+
+    // Perform central domain validation, excluding the current booking ID
+    const validation = validateBookingRequest(input, existingBookings, id);
+    if (!validation.isValid) {
+      return { error: validation.error || 'Invalid booking update request.' };
+    }
+
+    const startTimeDate = new Date(input.start_time);
+    const endTimeDate = new Date(startTimeDate.getTime() + input.duration * 60 * 1000);
+
+    const updatedBooking = {
+      ...existingBookings[existingBookingIndex],
+      name: input.name.trim(),
+      start_time: startTimeDate.toISOString(),
+      end_time: endTimeDate.toISOString(),
+      duration: input.duration,
+    };
+    existingBookings[existingBookingIndex] = updatedBooking;
+    writeLocalBookings(existingBookings);
+
+    return { booking: updatedBooking };
+  } finally {
+    release();
+  }
+}

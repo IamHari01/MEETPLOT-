@@ -2,8 +2,8 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Meeting Slot Booking App | Production Ready',
-  description: 'Book meeting slots with mandatory 15-minute buffer enforcement, concurrency protection, and real-time availability visualizer.',
+  title: 'MEETPLOT | Meeting Slot Booking',
+  description: 'A production-ready scheduling tool for booking meetings safely.',
 };
 
 export default function RootLayout({

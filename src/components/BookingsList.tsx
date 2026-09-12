@@ -2,16 +2,17 @@
 
 import React, { useState } from 'react';
 import { Booking } from '@/lib/types/booking';
-import { CalendarDays, Clock, User, Trash2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { CalendarDays, Clock, User, Trash2, Loader2, CheckCircle2, AlertCircle, Edit2 } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { HOST_TIMEZONE } from '@/lib/booking/logic';
 
 interface BookingsListProps {
   bookings: Booking[];
   onBookingCanceled: () => void;
+  onBookingEdit: (booking: Booking) => void;
 }
 
-export default function BookingsList({ bookings, onBookingCanceled }: BookingsListProps) {
+export default function BookingsList({ bookings, onBookingCanceled, onBookingEdit }: BookingsListProps) {
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -55,16 +56,15 @@ export default function BookingsList({ bookings, onBookingCanceled }: BookingsLi
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 shadow-xl shadow-slate-200/50">
+    <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
       <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
         <div>
           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-blue-600" />
+            <CalendarDays className="w-5 h-5 text-slate-800" />
             <span>Active Bookings</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">Chronologically ordered active schedule</p>
         </div>
-        <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-bold">
+        <span className="px-3 py-1 bg-slate-100 text-slate-800 rounded-full text-xs font-bold">
           {bookings.length} {bookings.length === 1 ? 'Meeting' : 'Meetings'}
         </span>
       </div>
@@ -84,11 +84,11 @@ export default function BookingsList({ bookings, onBookingCanceled }: BookingsLi
       )}
 
       {bookings.length === 0 ? (
-        <div className="text-center py-12 px-4 bg-slate-50/60 border border-dashed border-slate-200 rounded-xl">
-          <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-500 mx-auto flex items-center justify-center mb-3">
+        <div className="text-center py-12 px-4 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+          <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-500 mx-auto flex items-center justify-center mb-3">
             <CalendarDays className="w-6 h-6" />
           </div>
-          <h3 className="text-sm font-bold text-slate-700">No Meetings Booked</h3>
+          <h3 className="text-sm font-bold text-slate-800">No Meetings Booked</h3>
           <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
             There are no meetings scheduled. Select an available time slot above to create your first booking!
           </p>
@@ -98,43 +98,62 @@ export default function BookingsList({ bookings, onBookingCanceled }: BookingsLi
           {bookings.map((booking) => (
             <div
               key={booking.id}
-              className="p-4 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/80 rounded-xl transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+              className="relative bg-white border border-slate-200 rounded-xl transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group overflow-hidden pl-5 pr-4 py-4 hover:border-slate-300"
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span className="font-bold text-slate-800 text-base">{booking.name}</span>
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[11px] font-semibold rounded-md">
-                    {booking.duration} mins
-                  </span>
+              {/* Left Border Accent */}
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-orange-400"></div>
+              
+              <div className="flex gap-4 items-start w-full">
+                <div className="mt-1">
+                  <div className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center text-transparent hover:border-orange-400 hover:text-orange-400 cursor-pointer transition-colors">
+                    <CheckCircle2 className="w-3 h-3 opacity-0 hover:opacity-100" />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-600 pl-6">
-                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>
-                    {formatTime(booking.start_time)} → {formatTime(booking.end_time)}
-                  </span>
+                <div className="space-y-1.5 flex-1">
+                  <div>
+                    <span className="font-bold text-slate-800 text-base block">{booking.name}</span>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mt-0.5">
+                      <span>{booking.duration} mins</span>
+                      <span>&bull;</span>
+                      <span>Zoom</span>
+                      <span>&bull;</span>
+                      <span>One-on-One</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-orange-600 bg-orange-50 w-fit px-2 py-0.5 rounded-md">
+                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                       {formatInTimeZone(new Date(booking.start_time), HOST_TIMEZONE, 'EEE')},{' '}
+                       {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Cancel Button */}
-              <button
-                onClick={() => handleCancel(booking.id, booking.name)}
-                disabled={cancelingId === booking.id}
-                title="Cancel this booking and free up the time slot"
-                className="self-end sm:self-center px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {cancelingId === booking.id ? (
-                  <>
+              {/* Actions */}
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                <button
+                  onClick={() => onBookingEdit(booking)}
+                  disabled={cancelingId === booking.id}
+                  title="Edit this booking"
+                  className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={() => handleCancel(booking.id, booking.name)}
+                  disabled={cancelingId === booking.id}
+                  title="Cancel this booking"
+                  className="px-3 py-1.5 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-600 hover:text-rose-700 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {cancelingId === booking.id ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Canceling...</span>
-                  </>
-                ) : (
-                  <>
+                  ) : (
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>Cancel</span>
-                  </>
-                )}
-              </button>
+                  )}
+                </button>
+              </div>
             </div>
           ))}
         </div>

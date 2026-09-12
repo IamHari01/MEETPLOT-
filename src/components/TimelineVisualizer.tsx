@@ -38,11 +38,11 @@ export default function TimelineVisualizer({ dateISO, bookings }: TimelineVisual
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 shadow-xl shadow-slate-200/50">
+    <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
         <div>
           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-600" />
+            <Clock className="w-5 h-5 text-slate-800" />
             <span>Schedule Visualizer (IST)</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">Real-time status derived from single source of truth</p>
@@ -50,16 +50,16 @@ export default function TimelineVisualizer({ dateISO, bookings }: TimelineVisual
 
         {/* Status Legend Pills */}
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
             Available ({availableCount})
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-400 text-slate-900 border border-transparent rounded-full">
+            <span className="w-2 h-2 rounded-full bg-slate-900"></span>
             Booked ({bookedCount})
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-amber-600"></span>
             Buffer ({bufferCount})
           </span>
         </div>
@@ -70,27 +70,27 @@ export default function TimelineVisualizer({ dateISO, bookings }: TimelineVisual
         {mergedSlots.map((slot) => {
           let statusStyle = '';
           let badgeText = 'Available';
-          let icon = <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />;
+          let icon = <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />;
 
           if (slot.status === 'BOOKED') {
-            statusStyle = 'bg-indigo-50 border-indigo-200 text-indigo-900 shadow-sm';
+            statusStyle = 'bg-orange-400 text-slate-900 shadow-sm border-transparent';
             badgeText = `${slot.bookingName} (${slot.span * 15} mins)`;
-            icon = <UserCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />;
+            icon = <UserCheck className="w-3.5 h-3.5 text-slate-900 shrink-0" />;
           } else if (slot.status === 'BUFFER') {
-            statusStyle = 'bg-amber-50/80 border-amber-200 text-amber-900';
+            statusStyle = 'bg-amber-100 border-amber-300 text-amber-900';
             badgeText = 'Buffer (15m)';
-            icon = <ShieldAlert className="w-3.5 h-3.5 text-amber-500 shrink-0" />;
+            icon = <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
           } else {
-            statusStyle = 'bg-slate-50 border-slate-200/80 hover:bg-emerald-50/50 hover:border-emerald-200 text-slate-700';
+            statusStyle = 'bg-emerald-100 border-emerald-300 hover:border-emerald-400 hover:bg-emerald-200 text-emerald-900';
           }
 
           return (
             <div
               key={slot.isoTime}
               title={slot.reason || `${slot.time} - ${slot.status}`}
-              className={`p-2.5 rounded-xl border text-xs transition-all flex flex-col justify-between h-20 ${statusStyle} ${getSpanClass(slot.span)}`}
+              className={`p-2.5 rounded-xl border transition-all flex flex-col justify-between h-20 ${statusStyle} ${getSpanClass(slot.span)}`}
             >
-              <div className="font-bold text-slate-800 flex items-center justify-between">
+              <div className="font-bold flex items-center justify-between text-inherit">
                 <span>{slot.time}</span>
                 {icon}
               </div>

@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AllowedDuration, Booking, TimeSlotInfo } from '@/lib/types/booking';
 import { ALLOWED_DURATIONS, generateTimelineSlots, validateBookingRequest } from '@/lib/booking/logic';
 import { Clock, User, Calendar, AlertCircle, CheckCircle2, Loader2, Info, ChevronDown, Check } from 'lucide-react';
+import { formatInTimeZone } from 'date-fns-tz';
+import { HOST_TIMEZONE } from '@/lib/booking/logic';
 import CalendarPicker from './CalendarPicker';
 
 interface BookingFormProps {
@@ -12,9 +14,11 @@ interface BookingFormProps {
   onDateChange: (date: string) => void;
   bookings: Booking[];
   onBookingCreated: () => void;
+  editingBooking?: Booking | null;
+  onCancelEdit?: () => void;
 }
 
-export default function BookingForm({ dateISO, selectedDate, onDateChange, bookings, onBookingCreated }: BookingFormProps) {
+export default function BookingForm({ dateISO, selectedDate, onDateChange, bookings, onBookingCreated, editingBooking, onCancelEdit }: BookingFormProps) {
   const [name, setName] = useState('');
   const [duration, setDuration] = useState<AllowedDuration>(30);
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
@@ -35,27 +39,45 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (editingBooking) {
+      setName(editingBooking.name);
+      setDuration(editingBooking.duration as AllowedDuration);
+      setSelectedStartTime(editingBooking.start_time);
+      
+      const localDate = formatInTimeZone(new Date(editingBooking.start_time), HOST_TIMEZONE, 'yyyy-MM-dd');
+      if (localDate !== selectedDate) {
+        onDateChange(localDate);
+      }
+    }
+  }, [editingBooking]); // Deliberately omit selectedDate to avoid infinite loop
+
+  const relevantBookings = editingBooking 
+    ? bookings.filter(b => b.id !== editingBooking.id)
+    : bookings;
+
   // Generate timeline slots for slot selection
-  const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, bookings);
+  const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, relevantBookings);
 
   // Filter available slots that can fit selected duration
   const availableSlots = slots.filter((slot) => {
     // Basic test if slot can start a meeting
     const val = validateBookingRequest(
       { name: 'Preview', start_time: slot.isoTime, duration },
-      bookings
+      relevantBookings
     );
     return val.isValid;
   });
 
   // Reset selected start time if current selection becomes invalid
   useEffect(() => {
+    if (editingBooking) return; // Don't reset if we are editing
     if (availableSlots.length > 0 && !availableSlots.some((s) => s.isoTime === selectedStartTime)) {
       setSelectedStartTime(availableSlots[0].isoTime);
     } else if (availableSlots.length === 0) {
       setSelectedStartTime('');
     }
-  }, [duration, dateISO, bookings]);
+  }, [duration, dateISO, relevantBookings, editingBooking]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,8 +98,11 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
+      const method = editingBooking ? 'PATCH' : 'POST';
+      const url = editingBooking ? `/api/bookings/${editingBooking.id}` : '/api/bookings';
+      
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
@@ -95,10 +120,13 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
       }
 
       if (!res.ok || !data.success) {
-        setErrorMsg(data.error || 'Failed to create booking.');
+        setErrorMsg(data.error || `Failed to ${editingBooking ? 'update' : 'create'} booking.`);
       } else {
-        setSuccessMsg(`Booking confirmed for ${data.booking.name}!`);
+        setSuccessMsg(editingBooking ? 'Booking updated successfully!' : `Booking confirmed for ${data.booking.name}!`);
         setName('');
+        if (editingBooking && onCancelEdit) {
+          onCancelEdit();
+        }
         onBookingCreated();
       }
     } catch (err: any) {
@@ -109,13 +137,13 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
   };
 
   return (
-    <div className="relative z-20 bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 shadow-xl shadow-slate-200/50">
+    <div className="relative z-20 bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-        <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+        <div className="p-2.5 bg-black text-white rounded-xl">
           <Calendar className="w-5 h-5" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">New Booking</h2>
+          <h2 className="text-xl font-bold text-slate-800">{editingBooking ? 'Update Booking' : 'New Booking'}</h2>
           <p className="text-xs text-slate-500">9:00 AM - 6:00 PM (IST) • Mandatory 15-min Buffer</p>
         </div>
       </div>
@@ -144,7 +172,7 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
             Your Full Name <span className="text-rose-500">*</span>
           </label>
           <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
               id="name-input"
               type="text"
@@ -152,7 +180,7 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
               placeholder="e.g., Alex Johnson"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-slate-800/20 focus:border-slate-800 transition-all placeholder:text-slate-400"
             />
           </div>
         </div>
@@ -169,8 +197,8 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
                 type="button"
                 onClick={() => setDuration(dur)}
                 className={`py-2.5 px-3 rounded-xl border text-sm font-semibold transition-all flex flex-col items-center justify-center gap-1 ${duration === dur
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25 ring-2 ring-blue-600/20'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                    ? 'bg-slate-800 text-white border-slate-800 ring-2 ring-slate-800/20'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-800'
                   }`}
               >
                 <span>{dur} mins</span>
@@ -197,12 +225,12 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
               type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               disabled={availableSlots.length === 0}
-              className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 bg-slate-50 border rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-slate-300'
+              className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 bg-white border rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                isDropdownOpen ? 'border-slate-800 ring-1 ring-slate-800/20' : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               <div className="flex items-center gap-2">
-                <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <span className={selectedStartTime ? 'text-slate-800' : 'text-slate-500'}>
                   {availableSlots.length === 0 
                     ? `No slots available for ${duration} min meeting`
@@ -211,11 +239,11 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
                       : 'Select a time...'}
                 </span>
               </div>
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {isDropdownOpen && availableSlots.length > 0 && (
-              <div className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 py-1.5 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                 {availableSlots.map((slot) => {
                   const isSelected = slot.isoTime === selectedStartTime;
                   return (
@@ -226,8 +254,10 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
                         setSelectedStartTime(slot.isoTime);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                        isSelected ? 'bg-blue-50/50 text-blue-700 font-semibold' : 'text-slate-700'
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between group transition-colors ${
+                        isSelected 
+                          ? 'bg-orange-400 text-slate-900 font-semibold' 
+                          : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       <span>{slot.time}</span>
@@ -246,22 +276,33 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
           )}
         </div>
 
-        {/* Submit Button - MUST BE NAMED `SUBMITS` */}
-        <button
-          type="submit"
-          id="submit-booking-btn"
-          disabled={isSubmitting || availableSlots.length === 0}
-          className="w-full py-3.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>SUBMITTING...</span>
-            </>
-          ) : (
-            <span>SUBMIT</span>
+        {/* Submit Button */}
+        <div className="pt-2 flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={isSubmitting || !name || !selectedStartTime}
+            className="flex-1 bg-black text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 shadow-md shadow-black/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {editingBooking ? 'Updating...' : 'Scheduling...'}
+              </>
+            ) : (
+              editingBooking ? 'Save Changes' : 'Confirm Booking'
+            )}
+          </button>
+          
+          {editingBooking && onCancelEdit && (
+             <button
+               type="button"
+               onClick={onCancelEdit}
+               className="px-6 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 rounded-xl font-semibold text-sm transition-colors border border-transparent"
+             >
+               Cancel
+             </button>
           )}
-        </button>
+        </div>
       </form>
     </div>
   );

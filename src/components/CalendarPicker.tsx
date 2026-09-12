@@ -128,8 +128,8 @@ export default function CalendarPicker({ selectedDate, onDateChange }: CalendarP
             className={`
               p-2 w-full flex items-center justify-center text-sm rounded-xl font-medium transition-all
               ${!isCurrentMonth ? 'text-slate-300' : ''}
-              ${isPast ? 'opacity-40 cursor-not-allowed bg-slate-50' : 'hover:bg-slate-100'}
-              ${isSelected && !isPast ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/30 ring-2 ring-blue-500/20' : 'text-slate-700'}
+              ${isPast ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400' : 'hover:bg-slate-100'}
+              ${isSelected && !isPast ? 'bg-slate-800 text-white font-bold shadow-md' : 'text-slate-700'}
             `}
           >
             {formattedDate}
@@ -148,7 +148,7 @@ export default function CalendarPicker({ selectedDate, onDateChange }: CalendarP
   };
 
   return (
-    <div className="bg-slate-50/50 border border-slate-200/60 p-4 rounded-2xl">
+    <div className="bg-white border border-slate-200 shadow-sm p-4 rounded-2xl">
       {renderHeader()}
       {renderDays()}
       {renderCells()}

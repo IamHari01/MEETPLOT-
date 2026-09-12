@@ -41,3 +41,54 @@ export async function DELETE(
     );
   }
 }
+
+/**
+ * PATCH /api/bookings/[id]
+ * Updates an existing booking
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const id = params.id;
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Booking ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
+    const { name, start_time, duration } = body;
+
+    if (!name || !start_time || !duration) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // `updateBooking` inside lib/db/index.ts
+    const { updateBooking } = await import('@/lib/db');
+    const result = await updateBooking(id, { name, start_time, duration });
+
+    if (result.error) {
+      return NextResponse.json(
+        { success: false, error: result.error },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, booking: result.booking },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error(`[API] PATCH /api/bookings/[id] error for id ${params?.id}:`, error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred while updating the booking.' },
+      { status: 500 }
+    );
+  }
+}

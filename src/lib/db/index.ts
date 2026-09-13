@@ -38,8 +38,18 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 
 let supabase: SupabaseClient | null = null;
 
+const customFetch = (url: string | URL | globalThis.Request, options?: RequestInit) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000); // 2-second strict timeout
+  
+  return fetch(url, { ...options, signal: controller.signal as any })
+    .finally(() => clearTimeout(timeoutId));
+};
+
 if (supabaseUrl && supabaseKey) {
-  supabase = createClient(supabaseUrl, supabaseKey);
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { fetch: customFetch }
+  });
 }
 
 // Path for local dev file storage fallback

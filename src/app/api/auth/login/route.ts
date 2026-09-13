@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readLocalUsers } from '@/lib/db/users';
+import { supabaseDbClient } from '@/lib/supabase/client';
 
 export async function POST(req: Request) {
   try {
@@ -9,20 +9,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const users = readLocalUsers();
-    const user = users.find(u => u.email === email);
+    // Fetch user from Supabase app_users table
+    const { data: user, error } = await supabaseDbClient
+      .from('app_users')
+      .select('*')
+      .eq('email', email)
+      .single();
 
-    if (!user || user.password !== password) {
+    if (error || !user) {
       return NextResponse.json({ error: 'Incorrect ID or password.' }, { status: 401 });
     }
 
-    // Don't send password back to the client
-    const { password: _, ...safeUser } = user;
+    if (user.password !== password) {
+      return NextResponse.json({ error: 'Incorrect ID or password.' }, { status: 401 });
+    }
 
-    return NextResponse.json({ 
-      message: 'Login successful', 
-      user: safeUser 
-    });
+    return NextResponse.json({ message: 'Login successful', user });
 
   } catch (error) {
     console.error('Login error:', error);

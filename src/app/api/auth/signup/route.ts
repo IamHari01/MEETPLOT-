@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readLocalUsers, writeLocalUsers, User } from '@/lib/db/users';
-import crypto from 'crypto';
+import { supabaseDbClient } from '@/lib/supabase/client';
 
 export async function POST(req: Request) {
   try {
@@ -10,28 +9,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const users = readLocalUsers();
-    
-    if (users.find(u => u.email === email)) {
+    // Check if user already exists
+    const { data: existingUser } = await supabaseDbClient
+      .from('app_users')
+      .select('email')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });
     }
 
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      email,
-      password,
-      created_at: new Date().toISOString()
-    };
+    // Insert new user
+    const { data: newUser, error } = await supabaseDbClient
+      .from('app_users')
+      .insert([{ email, password }])
+      .select()
+      .single();
 
-    users.push(newUser);
-    writeLocalUsers(users);
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw error;
+    }
 
-    const { password: _, ...safeUser } = newUser;
-
-    return NextResponse.json({ 
-      message: 'User created successfully', 
-      user: safeUser 
-    });
+    return NextResponse.json({ message: 'User created successfully', user: newUser });
 
   } catch (error) {
     console.error('Signup error:', error);

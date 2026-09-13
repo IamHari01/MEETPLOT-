@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabaseAuthClient as supabase } from '@/lib/supabase/client';
+import { supabaseDbClient as supabase } from '@/lib/supabase/client';
 import { Calendar, ArrowRight, Loader2 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import Link from 'next/link';

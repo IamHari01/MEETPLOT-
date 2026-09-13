@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, ChevronDown, LogOut } from 'lucide-react';
 import Logo from '@/components/Logo';
-import { supabaseAuthClient as supabase } from '@/lib/supabase/client';
+import { supabaseDbClient as supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 interface NavbarProps {

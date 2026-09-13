@@ -110,5 +110,6 @@ const TimelineVisualizer = React.memo(({ dateISO, bookings }: TimelineVisualizer
       </div>
     </div>
   );
-}
+});
+
 export default TimelineVisualizer;

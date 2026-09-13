@@ -8,7 +8,7 @@ import BookingsList from '@/components/BookingsList';
 import { Booking } from '@/lib/types/booking';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { supabaseAuthClient as supabase } from '@/lib/supabase/client';
+import { supabaseDbClient as supabase } from '@/lib/supabase/client';
 
 export default function Home() {
   const router = useRouter();

@@ -9,9 +9,9 @@ type AuthMode = 'login' | 'signup' | 'forgot_password';
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>('login');
-  const [email, setEmail] = useState('admin@meetplot.com');
-  const [password, setPassword] = useState('admin123');
-  const [confirmPassword, setConfirmPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -115,6 +115,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   required
+                  placeholder="example@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-slate-800 focus:border-slate-800 sm:text-sm"

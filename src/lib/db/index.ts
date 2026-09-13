@@ -55,19 +55,29 @@ function ensureLocalStoreExists() {
   }
 }
 
+let memoryCache: Booking[] | null = null;
+
 function readLocalBookings(): Booking[] {
-  ensureLocalStoreExists();
+  if (memoryCache) return memoryCache;
   try {
+    ensureLocalStoreExists();
     const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(raw) as Booking[];
+    memoryCache = JSON.parse(raw) as Booking[];
+    return memoryCache;
   } catch {
-    return [];
+    memoryCache = [];
+    return memoryCache;
   }
 }
 
 function writeLocalBookings(bookings: Booking[]) {
-  ensureLocalStoreExists();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(bookings, null, 2), 'utf-8');
+  memoryCache = bookings;
+  try {
+    ensureLocalStoreExists();
+    fs.writeFileSync(DATA_FILE, JSON.stringify(bookings, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Filesystem write blocked (Vercel deployment detected). Using in-memory fallback.');
+  }
 }
 
 /**

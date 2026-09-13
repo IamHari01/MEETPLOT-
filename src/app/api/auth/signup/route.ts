@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { readLocalUsers, writeLocalUsers, User } from '@/lib/db/users';
+import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
@@ -8,11 +10,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // Mock authentication for easy testing
-    // Accepts any credentials and instantly creates a mock user!
+    const users = readLocalUsers();
+    
+    if (users.find(u => u.email === email)) {
+      return NextResponse.json({ error: 'User already exists' }, { status: 400 });
+    }
+
+    const newUser: User = {
+      id: crypto.randomUUID(),
+      email,
+      password,
+      created_at: new Date().toISOString()
+    };
+
+    users.push(newUser);
+    writeLocalUsers(users);
+
+    const { password: _, ...safeUser } = newUser;
+
     return NextResponse.json({ 
       message: 'User created successfully', 
-      user: { id: `mock-${email}-id`, email } 
+      user: safeUser 
     });
 
   } catch (error) {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { readLocalUsers } from '@/lib/db/users';
 
 export async function POST(req: Request) {
   try {
@@ -8,11 +9,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // Mock authentication for easy testing
-    // Accepts any credentials and instantly logs the user in!
+    const users = readLocalUsers();
+    const user = users.find(u => u.email === email);
+
+    if (!user || user.password !== password) {
+      return NextResponse.json({ error: 'Incorrect ID or password.' }, { status: 401 });
+    }
+
+    // Don't send password back to the client
+    const { password: _, ...safeUser } = user;
+
     return NextResponse.json({ 
       message: 'Login successful', 
-      user: { id: `mock-${email}-id`, email } 
+      user: safeUser 
     });
 
   } catch (error) {

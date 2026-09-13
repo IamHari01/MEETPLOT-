@@ -170,7 +170,8 @@ export default function BookingsList({ bookings, onBookingCanceled, onBookingEdi
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

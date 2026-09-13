@@ -18,7 +18,7 @@ interface BookingFormProps {
   onCancelEdit?: () => void;
 }
 
-export default function BookingForm({ dateISO, selectedDate, onDateChange, bookings, onBookingCreated, editingBooking, onCancelEdit }: BookingFormProps) {
+const BookingForm = React.memo(({ dateISO, selectedDate, onDateChange, bookings, onBookingCreated, editingBooking, onCancelEdit }: BookingFormProps) => {
   const [name, setName] = useState('');
   const [duration, setDuration] = useState<AllowedDuration>(30);
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
@@ -71,14 +71,14 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
   const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, relevantBookings);
 
   // Filter available slots that can fit selected duration
-  const availableSlots = slots.filter((slot) => {
+  const availableSlots = React.useMemo(() => slots.filter((slot) => {
     // Basic test if slot can start a meeting
     const val = validateBookingRequest(
       { name: 'Preview', start_time: slot.isoTime, duration },
       relevantBookings
     );
     return val.isValid;
-  });
+  }), [slots, duration, relevantBookings]);
 
   // Reset selected start time if current selection becomes invalid
   useEffect(() => {
@@ -317,4 +317,6 @@ export default function BookingForm({ dateISO, selectedDate, onDateChange, booki
       </form>
     </div>
   );
-}
+});
+
+export default BookingForm;

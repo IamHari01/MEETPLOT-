@@ -12,7 +12,7 @@ interface BookingsListProps {
   onBookingEdit: (booking: Booking) => void;
 }
 
-export default function BookingsList({ bookings, onBookingCanceled, onBookingEdit }: BookingsListProps) {
+const BookingsList = React.memo(({ bookings, onBookingCanceled, onBookingEdit }: BookingsListProps) => {
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -176,4 +176,6 @@ export default function BookingsList({ bookings, onBookingCanceled, onBookingEdi
       )}
     </div>
   );
-}
+});
+
+export default BookingsList;

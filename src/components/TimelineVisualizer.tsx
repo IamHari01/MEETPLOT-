@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Booking, SlotStatus, TimeSlotInfo } from '@/lib/types/booking';
 import { generateTimelineSlots } from '@/lib/booking/logic';
 import { Clock, ShieldAlert, CheckCircle, UserCheck } from 'lucide-react';
@@ -10,25 +10,32 @@ interface TimelineVisualizerProps {
   bookings: Booking[];
 }
 
-export default function TimelineVisualizer({ dateISO, bookings }: TimelineVisualizerProps) {
-  const slots: TimeSlotInfo[] = generateTimelineSlots(dateISO, bookings);
+const TimelineVisualizer = React.memo(({ dateISO, bookings }: TimelineVisualizerProps) => {
+  const slots: TimeSlotInfo[] = useMemo(() => generateTimelineSlots(dateISO, bookings), [dateISO, bookings]);
 
-  const bookedCount = slots.filter((s) => s.status === 'BOOKED').length;
-  const bufferCount = slots.filter((s) => s.status === 'BUFFER').length;
-  const availableCount = slots.filter((s) => s.status === 'AVAILABLE').length;
+  const { bookedCount, bufferCount, availableCount, mergedSlots } = useMemo(() => {
+    let booked = 0;
+    let buffer = 0;
+    let available = 0;
+    const merged: (TimeSlotInfo & { span: number })[] = [];
 
-  // Group consecutive booked slots of the same booking into a single element
-  const mergedSlots: (TimeSlotInfo & { span: number })[] = [];
-  for (const slot of slots) {
-    if (slot.status === 'BOOKED') {
-      const last = mergedSlots[mergedSlots.length - 1];
-      if (last && last.status === 'BOOKED' && last.bookingId === slot.bookingId) {
-        last.span += 1;
-        continue;
+    for (const slot of slots) {
+      if (slot.status === 'BOOKED') booked++;
+      else if (slot.status === 'BUFFER') buffer++;
+      else available++;
+
+      if (slot.status === 'BOOKED') {
+        const last = merged[merged.length - 1];
+        if (last && last.status === 'BOOKED' && last.bookingId === slot.bookingId) {
+          last.span += 1;
+          continue;
+        }
       }
+      merged.push({ ...slot, span: 1 });
     }
-    mergedSlots.push({ ...slot, span: 1 });
-  }
+
+    return { bookedCount: booked, bufferCount: buffer, availableCount: available, mergedSlots: merged };
+  }, [slots]);
 
   const getSpanClass = (span: number) => {
     if (span >= 6) return 'col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-6';
@@ -104,3 +111,4 @@ export default function TimelineVisualizer({ dateISO, bookings }: TimelineVisual
     </div>
   );
 }
+export default TimelineVisualizer;

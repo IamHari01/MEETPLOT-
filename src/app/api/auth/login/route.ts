@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { supabaseAuthClient } from '@/lib/supabase/client';
 
 export async function POST(req: Request) {
   try {
@@ -8,12 +9,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // Mock authentication for easy testing
-    // Accepts any credentials and instantly logs the user in!
-    return NextResponse.json({ 
-      message: 'Login successful', 
-      user: { id: 'mock-admin-id', email } 
-    });
+    // Fetch user from Supabase app_users table
+    const { data: user, error } = await supabaseAuthClient
+      .from('app_users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (error || !user) {
+      return NextResponse.json({ error: 'Incorrect ID or password.' }, { status: 401 });
+    }
+
+    if (user.password !== password) {
+      return NextResponse.json({ error: 'Incorrect ID or password.' }, { status: 401 });
+    }
+
+    return NextResponse.json({ message: 'Login successful', user });
 
   } catch (error) {
     console.error('Login error:', error);
